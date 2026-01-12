@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TrueScale Viewer</title>
+
+<style>
+  body { 
+    text-align: center; 
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #fafafa; 
+    padding: 20px; 
+    margin: 0;
+  }
+
+  h2, h3 { margin-bottom: 6px; }
+
+  input, button {
+    padding: 10px; 
+    margin: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+  }
+
+  button {
+    background: #333;
+    color: white;
+    cursor: pointer;
+    border: none;
+  }
+
+  button:hover { background: #555; }
+
+  #recalibrateBtn {
+    display: none;
+    font-size: 13px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    background: #666;
+  }
+
+  #calSection { display: block; }
+
+  #calBoxWrapper {
+    margin: 20px auto 0;
+    max-width: 340px;
+    text-align: left;
+  }
+
+  #calBox {
+    width: 200px;
+    height: 120px;
+    background: #ddd;
+    border: 2px dashed #888;
+    position: relative;
+    touch-action: none;
+    border-radius: 6px;
+  }
+
+  .resize-handle {
+    position: absolute;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    user-select: none;
+    touch-action: none;
+  }
+
+  #handle-right {
+    width: 26px;
+    height: 50px;
+    right: -18px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: ew-resize;
+  }
+
+  #handle-bottom {
+    width: 70px;
+    height: 26px;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: ns-resize;
+  }
+
+  #artwork {
+    display: none;
+    border: 1px solid #ccc;
+    margin-top: 25px;
+    max-width: none;
+    max-height: none;
+  }
+
+  #sizeRow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #devicePresetWrapper {
+    position: relative;
+    display: inline-block;
+    margin-left: 4px;
+  }
+  #presetWrapper {
+    position: relative;
+    display: inline-block;
+    margin-left: 4px;
+  }
+
+  #presetToggle,
+  #devicePresetToggle {
+    background: transparent;
+    border: none;
+    color: #555;
+    text-decoration: underline;
+    padding: 4px 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  #presetCard,
+  #devicePresetCard {
+    position: absolute;
+    top: 120%;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    padding: 8px 12px;
+    min-width: 220px;
+    text-align: left;
+    font-size: 13px;
+    display: none;
+    z-index: 25;
+  }
+
+  #presetCard h4,
+  #devicePresetCard h4 {
+    margin: 4px 0 6px;
+    font-size: 13px;
+  }
+
+  #presetCard button,
+  #devicePresetCard button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 4px 0;
+    margin: 0;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+  }
+
+  #presetCard small,
+  #devicePresetCard small {
+    color: #777;
+    font-size: 11px;
+  }
+
+  #rulerX, #rulerY {
+    position: fixed;
+    background: transparent;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.6;
+  }
+
+  #rulerX {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 18px;
+    background: repeating-linear-gradient(90deg,
+      #bbb 0px, #bbb 1px, transparent 1px, transparent 10px);
+  }
+
+  #rulerY {
+    top: 0;
+    left: 0;
+    width: 18px;
+    height: 100%;
+    background: repeating-linear-gradient(180deg,
+      #bbb 0px, #bbb 1px, transparent 1px, transparent 10px);
+  }
+
+  #rulerXLabels, #rulerYLabels {
+    position: fixed;
+    pointer-events: none;
+    z-index: 15;
+    color: #aaa;
+    font-size: 10px;
+  }
+
+  #rulerXLabels span { position: absolute; top: 2px; }
+  #rulerYLabels span { position: absolute; left: 2px; }
+  /* ===== Minimal polish (SAFE) ===== */
+body{
+  background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%);
+}
+
+h2,h3{
+  color:#1a202c;
+}
+
+button{
+  border-radius:10px!important;
+  padding:10px 14px!important;
+}
+
+#calSection,
+#sizeRow{
+  background:#ffffff;
+  padding:24px;
+  border-radius:16px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+  margin-bottom:24px;
+}
+
+input,select{
+  border:2px solid #e5e7eb!important;
+  border-radius:8px!important;
+}
+  /* ===== Logo in header ===== */
+.header-inner{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  justify-content:center;
+}
+
+.app-logo{
+  height:56px;
+  width:auto;
+  border-radius:8px;
+}
+
+.logo-text{
+  font-size:28px;
+  font-weight:700;
+  color:#1a202c;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <img
+  src="data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='120'%20height='120'%3E%3Crect%20x='0'%20y='0'%20width='120'%20height='120'%20rx='16'%20ry='16'%20fill='%23f3e8d3'/%3E%3Ctext%20x='18'%20y='52'%20font-family='-apple-system,Segoe UI,Arial'%20font-size='34'%20font-weight='700'%20fill='%231a202c'%3ETrue%3C/text%3E%3Ctext%20x='18'%20y='92'%20font-family='-apple-system,Segoe UI,Arial'%20font-size='34'%20font-weight='700'%20fill='%231a202c'%3EScale%3C/text%3E%3C/svg%3E"
+  class="app-logo"
+  alt="TrueScale Logo">
+    <div>
+      <div class="logo-text">TrueScale</div>
+      <div class="tagline">View your artwork at its exact real-world size</div>
+    </div>
+  </div>
+</div>
+<button id="recalibrateBtn" onclick="resetCalibration()">Change device / recalibrate</button>
+
+<!-- ------------------ CALIBRATION ------------------ -->
+<div id="calSection">
+  <h3>Step 1 — Screen Setup</h3>
+  <p>
+    Option A: <strong>Select device preset</strong> · 
+    Option B: <strong>Calibrate with card</strong>
+  </p>
+
+  <div id="devicePresetWrapper">
+    <button id="devicePresetToggle">Device PPI Presets ▾</button>
+    <div id="devicePresetCard">
+      <h4>Select Your Device</h4>
+
+      <strong>My Laptop (manual PPI)</strong>
+      <div style="margin:6px 0 10px;">
+        <input id="manualPpiInput" type="number" step="0.1" placeholder="Enter PPI"
+               style="width:120px; padding:6px; font-size:12px;">
+        <button onclick="applyManualPpi()" style="padding:6px 8px; font-size:12px;">Apply</button>
+      </div>
+
+      <hr style="border:0; border-top:1px solid #eee; margin:8px 0;">
+
+      <strong>Apple</strong>
+      <button onclick="applyDevicePreset('ipadPro')">iPad Pro<br><small>264 PPI</small></button>
+      <button onclick="applyDevicePreset('iphoneModern')">iPhone 13–15<br><small>460 PPI</small></button>
+      <button onclick="applyDevicePreset('iphoneClassic')">iPhone SE<br><small>326 PPI</small></button>
+      <button onclick="applyDevicePreset('macbookRetina')">MacBook Retina<br><small>227 PPI</small></button>
+
+      <br><strong>Samsung</strong>
+      <button onclick="applyDevicePreset('galaxyS')">Galaxy S/Note<br><small>420 PPI</small></button>
+      <button onclick="applyDevicePreset('galaxyTab')">Galaxy Tab<br><small>265 PPI</small></button>
+
+      <br><strong>Windows</strong>
+      <button onclick="applyDevicePreset('surfacePro')">Surface Pro<br><small>267 PPI</small></button>
+      <button onclick="applyDevicePreset('surfaceLaptop')">Surface Laptop<br><small>201 PPI</small></button>
+
+      <br><strong>Monitors</strong>
+      <button onclick="applyDevicePreset('monitor1080_24')">24″ 1080p<br><small>92 PPI</small></button>
+      <button onclick="applyDevicePreset('monitor1440_27')">27″ 1440p<br><small>109 PPI</small></button>
+      <button onclick="applyDevicePreset('monitor4k_27')">27″ 4K<br><small>163 PPI</small></button>
+    </div>
+  </div>
+
+  <p style="margin-top:16px;">Calibration: resize this box to match a credit card.</p>
+
+  <div id="calBoxWrapper">
+    <div id="calBox">
+      <div id="handle-right" class="resize-handle">⇆</div>
+      <div id="handle-bottom" class="resize-handle">⇅</div>
+    </div>
+  </div>
+
+  <button onclick="finishCalibration()">✔ Save Calibration</button>
+</div>
+
+<hr style="margin: 30px 0;">
+
+<!-- ------------------ ARTWORK ------------------ -->
+<h3>Step 2 — Load Artwork</h3>
+
+<div id="sizeRow">
+  <label>Height:</label>
+  <input type="number" id="height" step="0.01">
+
+  <label>Width:</label>
+  <input type="number" id="width" step="0.01">
+
+  <!-- ★ NEW UNIT DROPDOWN -->
+  <select id="unitSelect" style="padding:6px; border-radius:6px;">
+    <option value="in">inches</option>
+    <option value="cm">cm</option>
+  </select>
+  <!-- ★ END -->
+
+  <div id="presetWrapper">
+    <button id="presetToggle" type="button">Popular Paintings ▾</button>
+    <div id="presetCard"></div>
+  </div>
+</div>
+
+<br>
+<input type="file" id="upload" accept="image/*">
+<button onclick="showImage()">View at True Scale</button>
+
+<!-- Rulers + labels -->
+<div id="rulerX" style="display:none"></div>
+<div id="rulerY" style="display:none"></div>
+<div id="rulerXLabels" style="display:none"></div>
+<div id="rulerYLabels" style="display:none"></div>
+
+<img id="artwork" alt="Artwork">
+
+<script>
+/* ========= unchanged sections: PPI logic, DPR, calibration, device presets, rulers ========= */
+
+let screenPPI = 96;
+const dpr = window.devicePixelRatio || 1;
+
+const box = document.getElementById("calBox");
+const rightHandle = document.getElementById("handle-right");
+const bottomHandle = document.getElementById("handle-bottom");
+const calSection = document.getElementById("calSection");
+const recalibrateBtn = document.getElementById("recalibrateBtn");
+
+const presetToggle = document.getElementById("presetToggle");
+const presetCard = document.getElementById("presetCard");
+const presetWrapper = document.getElementById("presetWrapper");
+
+const devicePresetToggle = document.getElementById("devicePresetToggle");
+const devicePresetCard = document.getElementById("devicePresetCard");
+const devicePresetWrapper = document.getElementById("devicePresetWrapper");
+
+const rulerX = document.getElementById("rulerX");
+const rulerY = document.getElementById("rulerY");
+const rulerXLabels = document.getElementById("rulerXLabels");
+const rulerYLabels = document.getElementById("rulerYLabels");
+
+if (localStorage.getItem("screenPPI")) {
+  screenPPI = parseFloat(localStorage.getItem("screenPPI"));
+  calSection.style.display = "none";
+  recalibrateBtn.style.display = "inline-block";
+}
+
+function getCssPpi() {
+  return screenPPI / dpr;
+}
+
+/* ----- device preset logic (unchanged) ----- */
+const devicePresets = {
+  ipadPro: 264,
+  iphoneModern: 460,
+  iphoneClassic: 326,
+  macbookRetina: 227,
+  galaxyS: 420,
+  galaxyTab: 265,
+  surfacePro: 267,
+  surfaceLaptop: 201,
+  monitor1080_24: 92,
+  monitor1440_27: 109,
+  monitor4k_27: 163
+};
+
+function applyDevicePreset(key) {
+  screenPPI = devicePresets[key];
+  localStorage.setItem("screenPPI", screenPPI);
+  calSection.style.display = "none";
+  devicePresetCard.style.display = "none";
+  recalibrateBtn.style.display = "inline-block";
+  alert("Device preset applied!");
+}
+
+function applyManualPpi() {
+  const v = parseFloat(document.getElementById("manualPpiInput").value);
+  if (!v) return alert("Enter a valid PPI");
+  screenPPI = v;
+  localStorage.setItem("screenPPI", v);
+  calSection.style.display = "none";
+  devicePresetCard.style.display = "none";
+  recalibrateBtn.style.display = "inline-block";
+  alert("Manual PPI applied");
+}
+
+/* ----- calibration (unchanged) ----- */
+
+rightHandle.onpointerdown = e => {
+  e.preventDefault();
+  const startLeft = box.getBoundingClientRect().left;
+  document.onpointermove = ev => {
+    const newWidth = ev.clientX - startLeft;
+    if (newWidth > 40) box.style.width = newWidth + "px";
+  };
+  document.onpointerup = () => document.onpointermove = null;
+};
+
+bottomHandle.onpointerdown = e => {
+  e.preventDefault();
+  const startTop = box.getBoundingClientRect().top;
+  document.onpointermove = ev => {
+    const newHeight = ev.clientY - startTop;
+    if (newHeight > 40) box.style.height = newHeight + "px";
+  };
+  document.onpointerup = () => document.onpointermove = null;
+};
+
+function finishCalibration() {
+  const realW = 3.370;
+  const realH = 2.125;
+  const pxW = box.offsetWidth;
+  const pxH = box.offsetHeight;
+
+  const ppiX = (pxW * dpr) / realW;
+  const ppiY = (pxH * dpr) / realH;
+  screenPPI = (ppiX + ppiY) / 2;
+
+  localStorage.setItem("screenPPI", screenPPI);
+  calSection.style.display = "none";
+  recalibrateBtn.style.display = "inline-block";
+  alert("Calibration saved! PPI ≈ " + screenPPI.toFixed(2));
+}
+
+function resetCalibration() {
+  localStorage.removeItem("screenPPI");
+  screenPPI = 96;
+  calSection.style.display = "block";
+  recalibrateBtn.style.display = "none";
+  box.style.width = "200px";
+  box.style.height = "120px";
+}
+
+/* ---------- NEW SECTION: DYNAMIC CATEGORY PRESETS ---------- */
+
+const artPresets = {
+  "Vermeer — Miniatures": [
+    { id:"vermeer_lacemaker",        title:"The Lacemaker",                h:9.45,  w:8.27 },
+    { id:"vermeer_redhat",           title:"Girl with a Red Hat",          h:9.0,   w:7.0 },
+    { id:"vermeer_guitar_player",    title:"The Guitar Player",            h:18.0,  w:15.0 }
+  ],
+  "Dutch Miniatures": [
+    { id:"fabritius_goldfinch",      title:"The Goldfinch",                h:13.2,  w:9.0 },
+    { id:"dou_woman_reading",        title:"Gerrit Dou — Woman Reading",   h:9.5,   w:7.5 },
+    { id:"metsu_tavern",             title:"Gabriel Metsu — Tavern Scene", h:10.0,  w:8.0 }
+  ],
+  "Dürer — Studies": [
+    { id:"durer_hare",               title:"Young Hare",                   h:9.0,   w:8.0 },
+    { id:"durer_wing",               title:"Wing of a European Roller",    h:8.8,   w:7.4 },
+    { id:"durer_clump",              title:"The Large Piece of Turf",      h:15.4,  w:12.1 }
+  ],
+  "Hokusai / Ukiyo-e Mini Prints": [
+    { id:"hokusai_sparrow",          title:"Sparrow & Bamboo",             h:7.0,   w:5.0 },
+    { id:"hokusai_lotus",            title:"Lotus Flower",                 h:7.5,   w:5.0 },
+    { id:"hiroshige_plum",           title:"Hiroshige — Plum Garden",      h:8.2,   w:5.4 }
+  ],
+  "Chardin — Miniatures": [
+    { id:"chardin_schoolmistress",   title:"The Young Schoolmistress",     h:7.3,   w:5.9 },
+    { id:"chardin_bubble",           title:"Boy Blowing Bubbles",          h:7.8,   w:6.2 },
+    { id:"chardin_attributes",       title:"Attributes of the Arts",       h:8.5,   w:6.0 }
+  ],
+  "Renaissance Mini Panels": [
+    { id:"vaneyck_turban",           title:"Man in Red Turban",            h:10.4,  w:7.5 },
+    { id:"memling_diptych",          title:"Hans Memling Diptych",         h:12.0,  w:7.5 },
+    { id:"botticelli_madonna_small", title:"Botticelli — Small Madonna",   h:11.0,  w:9.0 }
+  ],
+  "Others": [
+    { id:"davinci_monalisa",         title:"Mona Lisa",                    h:30.31, w:20.87 }
+  ]
+};
+
+function populatePresets() {
+  let html = "";
+  for (const category of Object.keys(artPresets)) {
+    html += `<h4>${category}</h4>`;
+    for (const item of artPresets[category]) {
+      html += `
+        <button onclick="applyPresetById('${item.id}')">
+          ${item.title}<br>
+          <small>${item.h.toFixed(2)} × ${item.w.toFixed(2)}"</small>
+        </button>`;
+    }
+  }
+  presetCard.innerHTML = html;
+}
+
+function applyPresetById(id) {
+  for (const category of Object.values(artPresets)) {
+    for (const item of category) {
+      if (item.id === id) {
+        document.getElementById("height").value = item.h.toFixed(2);
+        document.getElementById("width").value = item.w.toFixed(2);
+        presetCard.style.display = "none";
+        return;
+      }
+    }
+  }
+}
+
+populatePresets();
+
+/* ---------- Dropdown interaction ---------- */
+presetToggle.onclick = e => {
+  e.stopPropagation();
+  presetCard.style.display =
+    (presetCard.style.display === "block" ? "none" : "block");
+};
+
+devicePresetToggle.onclick = e => {
+  e.stopPropagation();
+  devicePresetCard.style.display =
+    (devicePresetCard.style.display === "block" ? "none" : "block");
+};
+
+document.onclick = e => {
+  if (!presetWrapper.contains(e.target)) presetCard.style.display = "none";
+  if (!devicePresetWrapper.contains(e.target)) devicePresetCard.style.display = "none";
+};
+
+/* ---------- True scale rendering ---------- */
+
+function updateRulerLabels() {
+  rulerXLabels.innerHTML = "";
+  rulerYLabels.innerHTML = "";
+
+  const cssPpi = getCssPpi();
+  const maxInchesX = Math.floor(window.innerWidth / cssPpi);
+  const maxInchesY = Math.floor(window.innerHeight / cssPpi);
+
+  for (let i = 5; i <= maxInchesX; i += 5) {
+    const span = document.createElement("span");
+    span.textContent = i + `"`;
+    span.style.left = (i * cssPpi - 8) + "px";
+    rulerXLabels.appendChild(span);
+  }
+
+  for (let i = 5; i <= maxInchesY; i += 5) {
+    const span = document.createElement("span");
+    span.textContent = i + `"`;
+    span.style.top = (i * cssPpi - 8) + "px";
+    rulerYLabels.appendChild(span);
+  }
+}
+
+function showImage() {
+
+  const file = document.getElementById('upload').files[0];
+  if (!file) return alert("Upload an image first!");
+
+  /* ★ UNIT SUPPORT ADDED HERE */
+  const unit = document.getElementById("unitSelect").value;
+
+  let hInches = parseFloat(document.getElementById('height').value);
+  let wInches = parseFloat(document.getElementById('width').value);
+
+  if (!hInches || !wInches)
+    return alert("Enter valid height & width!");
+
+  if (unit === "cm") {
+    hInches = hInches / 2.54;
+    wInches = wInches / 2.54;
+  }
+  /* ★ END OF NEW LOGIC */
+
+  const cssPpi = getCssPpi();
+
+  const img = document.getElementById('artwork');
+  img.src = URL.createObjectURL(file);
+
+  img.style.height = (hInches * cssPpi) + "px";
+  img.style.width  = (wInches * cssPpi) + "px";
+
+  img.style.display = "block";
+
+  rulerX.style.display = "block";
+  rulerY.style.display = "block";
+  rulerXLabels.style.display = "block";
+  rulerYLabels.style.display = "block";
+
+  updateRulerLabels();
+}
+
+window.addEventListener("resize", () => {
+  if (rulerX.style.display === "block") {
+    updateRulerLabels();
+  }
+});
+</script>
+
+</body>
+</html>
+    
+  </body>
+  
+</html>
