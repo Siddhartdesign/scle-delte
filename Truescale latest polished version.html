@@ -337,13 +337,22 @@ input,select{
   <label>Width:</label>
   <input type="number" id="width" step="0.01">
 
+
   <!-- ★ NEW UNIT DROPDOWN -->
   <select id="unitSelect" style="padding:6px; border-radius:6px;">
     <option value="in">inches</option>
     <option value="cm">cm</option>
   </select>
   <!-- ★ END -->
+  
+<!-- ===== ASPECT RATIO ADDITION (UI) ===== -->
+<label style="font-size:13px;">
+  <input type="checkbox" id="lockRatio" checked>
+  Lock aspect ratio
+</label>
+<!-- ===== END ASPECT RATIO ADDITION (UI) ===== -->
 
+  
   <div id="presetWrapper">
     <button id="presetToggle" type="button">Popular Paintings ▾</button>
     <div id="presetCard"></div>
@@ -368,6 +377,13 @@ input,select{
 let screenPPI = 96;
 const dpr = window.devicePixelRatio || 1;
 
+  /* ===== ASPECT RATIO ADDITION ===== */
+/* Stores original image width / height ratio */
+let imageAspect = null;
+/* ===== END ASPECT RATIO ADDITION ===== */
+
+
+  
 const box = document.getElementById("calBox");
 const rightHandle = document.getElementById("handle-right");
 const bottomHandle = document.getElementById("handle-bottom");
@@ -378,6 +394,23 @@ const presetToggle = document.getElementById("presetToggle");
 const presetCard = document.getElementById("presetCard");
 const presetWrapper = document.getElementById("presetWrapper");
 
+/* ===== ASPECT RATIO ADDITION ===== */
+/* Capture natural image ratio on upload */
+
+document.getElementById("upload").addEventListener("change", () => {
+  const file = document.getElementById("upload").files[0];
+  if (!file) return;
+
+  const img = new Image();
+  img.onload = () => {
+    imageAspect = img.naturalWidth / img.naturalHeight;
+  };
+  img.src = URL.createObjectURL(file);
+});
+
+/* ===== END ASPECT RATIO ADDITION ===== */
+
+  
 const devicePresetToggle = document.getElementById("devicePresetToggle");
 const devicePresetCard = document.getElementById("devicePresetCard");
 const devicePresetWrapper = document.getElementById("devicePresetWrapper");
@@ -628,6 +661,43 @@ function showImage() {
   updateRulerLabels();
 }
 
+  /* ===== ASPECT RATIO ADDITION ===== */
+/* Height edited → auto width */
+
+document.getElementById("height").addEventListener("input", () => {
+  if (!imageAspect) return;
+  if (!document.getElementById("lockRatio").checked) return;
+
+  /* NEW: only react if user is editing HEIGHT */
+  if (document.activeElement.id !== "height") return;
+  
+  const h = parseFloat(document.getElementById("height").value);
+  if (!h) return;
+
+  document.getElementById("width").value = (h * imageAspect).toFixed(2);
+});
+
+/* ===== END ASPECT RATIO ADDITION ===== */
+
+/* ===== ASPECT RATIO ADDITION ===== */
+/* Width edited → auto height */
+
+document.getElementById("width").addEventListener("input", () => {
+  if (!imageAspect) return;
+  if (!document.getElementById("lockRatio").checked) return;
+
+  /* NEW: only react if user is editing WIDTH */
+  if (document.activeElement.id !== "width") return;
+  
+  const w = parseFloat(document.getElementById("width").value);
+  if (!w) return;
+
+  document.getElementById("height").value = (w / imageAspect).toFixed(2);
+});
+
+/* ===== END ASPECT RATIO ADDITION ===== */
+
+  
 window.addEventListener("resize", () => {
   if (rulerX.style.display === "block") {
     updateRulerLabels();
