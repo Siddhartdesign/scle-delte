@@ -252,6 +252,32 @@ input,select{
   font-weight:700;
   color:#1a202c;
 }
+
+/* ===== Mobile layout tweak (phones only) ===== */
+@media (max-width: 420px) {
+
+  #sizeRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #sizeRow label {
+    align-self: flex-start;
+  }
+
+  #sizeRow input,
+  #sizeRow select {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  #presetWrapper,
+  #devicePresetWrapper {
+    align-self: flex-start;
+  }
+}
+
+  
 </style>
 </head>
 <body>
@@ -735,4 +761,5 @@ window.addEventListener("resize", () => {
     
   </body>
   
+
 </html>
