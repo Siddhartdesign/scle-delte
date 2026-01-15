@@ -73,22 +73,56 @@
     touch-action: none;
   }
 
-  #handle-right {
-    width: 26px;
-  height: 50px;
-  right: -18px;
+  /* ===== Long calibration handles ===== */
+
+.long-handle {
+  position: absolute;
+  background: rgba(0,0,0,0.25);
+  touch-action: none;
+}
+
+/* Horizontal (right) handle */
+.long-handle.horizontal {
+  height: 28px;
+  width: 140px;              /* long bar */
+  right: -95px;              /* ~2/3 outside */
   top: 50%;
   transform: translateY(-50%);
   cursor: ew-resize;
 }
-  #handle-bottom {
-    width: 70px;
-  height: 26px;
-  bottom: -18px;
+
+/* Vertical (bottom) handle */
+.long-handle.vertical {
+  width: 28px;
+  height: 140px;             /* long bar */
+  bottom: -95px;             /* ~2/3 outside */
   left: 50%;
   transform: translateX(-50%);
   cursor: ns-resize;
 }
+
+/* Intersection dot */
+.handle-dot {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #000;
+  border-radius: 50%;
+}
+
+/* Dot placement */
+.long-handle.horizontal .handle-dot {
+  left: 45px;                /* ~1/3 inside */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.long-handle.vertical .handle-dot {
+  top: 45px;                 /* ~1/3 inside */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 
   #artwork {
     display: none;
@@ -357,8 +391,14 @@ input,select{
 
   <div id="calBoxWrapper">
     <div id="calBox">
-      <div id="handle-right" class="resize-handle">⇆</div>
-      <div id="handle-bottom" class="resize-handle">⇅</div>
+     <div id="handle-right" class="resize-handle long-handle horizontal">
+  <span class="handle-dot"></span>
+</div>
+
+<div id="handle-bottom" class="resize-handle long-handle vertical">
+  <span class="handle-dot"></span>
+</div>
+
     </div>
   </div>
 
